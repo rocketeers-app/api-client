@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "^8.2"
+        "php": "^7.0"
     },
     "require-dev": {
         "pestphp/pest": "^3.0"
