@@ -7,7 +7,7 @@ A lightweight PHP client for the [Rocketeers](https://rocketeers.app) API. Repor
 
 ## Requirements
 
-- PHP 8.2+
+- PHP 7.0+
 
 ## Installation
 
