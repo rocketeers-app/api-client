@@ -105,3 +105,24 @@ it('can be instantiated with a token', function () {
 
     expect($client)->toBeInstanceOf(Rocketeers::class);
 });
+
+it('uses the default base url when no override is set', function () {
+    Rocketeers::setBaseUrl(null);
+
+    $client = new TestableRocketeers('token');
+    $client->report(['error' => 'test']);
+
+    expect($client->lastUrl)->toBe('https://rocketeers.app/api/v1/errors');
+});
+
+it('uses the static base url override when set', function () {
+    Rocketeers::setBaseUrl('https://custom.example.com/api/v1');
+
+    $client = new TestableRocketeers('token');
+    $client->report(['error' => 'test']);
+
+    expect($client->lastUrl)->toBe('https://custom.example.com/api/v1/errors');
+
+    // Reset for other tests
+    Rocketeers::setBaseUrl(null);
+});
