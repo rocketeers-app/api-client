@@ -6,12 +6,19 @@ use Exception;
 
 class Rocketeers
 {
+    protected static $baseUrlOverride = 'https://rocketeers.app/api/v1';
+
     protected $baseUrl;
     protected $token;
 
+    public static function setBaseUrl($url)
+    {
+        static::$baseUrlOverride = $url;
+    }
+
     public function __construct($token)
     {
-        $this->baseUrl = 'https://rocketeers.app/api/v1';
+        $this->baseUrl = static::$baseUrlOverride;
         $this->token = $token;
     }
 
