@@ -11,6 +11,9 @@ class Rocketeers
     protected $baseUrl;
     protected $token;
 
+    /** @var Redactor|null */
+    protected $redactor;
+
     public static function setBaseUrl($url)
     {
         static::$baseUrlOverride = $url;
@@ -22,6 +25,22 @@ class Rocketeers
         $this->token = $token;
     }
 
+    public function setRedactor(Redactor $redactor)
+    {
+        $this->redactor = $redactor;
+
+        return $this;
+    }
+
+    public function redactor()
+    {
+        if ($this->redactor === null) {
+            $this->redactor = new Redactor;
+        }
+
+        return $this->redactor;
+    }
+
     public function report(array $data)
     {
         if (isset($_SERVER['HTTP_HOST'])) {
@@ -29,7 +48,7 @@ class Rocketeers
         }
 
         try {
-            $json = json_encode($data);
+            $json = json_encode($this->redactor()->redactPayload($data));
 
             $ch = curl_init($this->baseUrl . '/errors');
             curl_setopt_array($ch, [
