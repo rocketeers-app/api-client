@@ -29,6 +29,31 @@ $client->report([
 ]);
 ```
 
+## Redaction
+
+Every report is scrubbed by `Rocketeers\Redactor` before it is sent, so a credential that ends up
+in an exception message, a request payload or a queued job body never leaves the process.
+
+Field names are matched as a **substring**, lower-cased with dashes normalised to underscores, so
+one entry covers a family of names: `secret` also covers `client_secret`, `token` also covers
+`refresh_token`, and `api_key` also covers `X-Api-Key`. Credentials with no field name to recognise
+them by are matched by shape — private key blocks, `Authorization` headers, `MYSQL_PWD=`,
+`--password=`, `sshpass -p`, SQL `IDENTIFIED BY`, and credential-shaped query parameters in a URL.
+A string holding JSON is decoded and walked rather than matched as one blob.
+
+The report's own field names are never matched, so `code` stays the HTTP status and `cookies` stays
+the cookie jar; inside request fields (`querystring`, `inputs`, `headers`, `cookies`, `sessions`)
+`code`, `key` and `state` are treated as credentials too.
+
+Pass extra field names your application uses; the built-in list is never replaced:
+
+```php
+use Rocketeers\Redactor;
+use Rocketeers\Rocketeers;
+
+$client = (new Rocketeers('your-api-token'))->setRedactor(new Redactor(['pincode', 'bsn']));
+```
+
 ## Testing
 
 ```bash

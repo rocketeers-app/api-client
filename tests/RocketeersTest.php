@@ -1,5 +1,6 @@
 <?php
 
+use Rocketeers\Redactor;
 use Rocketeers\Rocketeers;
 
 class TestableRocketeers extends Rocketeers
@@ -16,7 +17,7 @@ class TestableRocketeers extends Rocketeers
         }
 
         $this->lastUrl = $this->baseUrl . '/errors';
-        $this->lastBody = json_encode($data);
+        $this->lastBody = json_encode($this->redactor()->redactPayload($data));
         $this->lastHeaders = [
             'Content-Type: application/json',
             'Accept: application/json',
@@ -125,4 +126,30 @@ it('uses the static base url override when set', function () {
 
     // Reset for other tests
     Rocketeers::setBaseUrl('https://rocketeers.app/api/v1');
+});
+
+it('redacts the payload before it goes over the wire', function () {
+    $client = new TestableRocketeers('token');
+
+    $client->report([
+        'code' => 500,
+        'message' => 'boom',
+        'inputs' => ['email' => 'mark@ux.nl', 'current_password' => 'hunter2'],
+        'context' => ['credentials' => ['secret' => 'super-secret-value']],
+    ]);
+
+    $body = json_decode($client->lastBody, true);
+
+    expect($client->lastBody)->not->toContain('hunter2')
+        ->not->toContain('super-secret-value')
+        ->and($body['code'])->toBe(500)
+        ->and($body['inputs']['email'])->toBe('mark@ux.nl');
+});
+
+it('takes extra sensitive keys from the consumer', function () {
+    $client = (new TestableRocketeers('token'))->setRedactor(new Redactor(['pincode']));
+
+    $client->report(['inputs' => ['pincode' => '1234']]);
+
+    expect($client->lastBody)->not->toContain('1234');
 });
