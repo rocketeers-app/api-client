@@ -1,0 +1,45 @@
+{
+    "name": "rocketeers-app/rocketeers-api-client",
+    "description": "Rocketeers API Client",
+    "keywords": [
+        "Mark van Eijk",
+        "rocketeers-api-client"
+    ],
+    "homepage": "https://github.com/rocketeers-app/rocketeers-api-client",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Mark van Eijk",
+            "email": "mark@vaneijk.co",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rocketeers\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rocketeers\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {}
+}
