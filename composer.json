@@ -5,7 +5,7 @@
         "Mark van Eijk",
         "rocketeers-api-client"
     ],
-    "homepage": "https://github.com/rocketeers-app/rocketeers-api-client",
+    "homepage": "https://github.com/rocketeers-app/api-client",
     "license": "MIT",
     "type": "library",
     "authors": [

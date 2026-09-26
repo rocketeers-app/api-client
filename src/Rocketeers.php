@@ -6,7 +6,7 @@ use Exception;
 
 class Rocketeers
 {
-    protected static $baseUrlOverride = 'https://rocketeers.app/api/v1';
+    protected static $baseUrlOverride = 'https://app.rocketeersapp.com/api/v1';
 
     protected $baseUrl;
     protected $token;

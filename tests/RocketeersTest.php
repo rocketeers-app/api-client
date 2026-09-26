@@ -33,7 +33,7 @@ it('sends a report to the errors endpoint', function () {
     $client = new TestableRocketeers('test-token-123');
     $response = $client->report(['message' => 'Something went wrong']);
 
-    expect($client->lastUrl)->toBe('https://rocketeers.app/api/v1/errors');
+    expect($client->lastUrl)->toBe('https://app.rocketeersapp.com/api/v1/errors');
     expect($response)->toBe('{"status":"ok"}');
 });
 
@@ -108,12 +108,12 @@ it('can be instantiated with a token', function () {
 });
 
 it('uses the default base url when no override is set', function () {
-    Rocketeers::setBaseUrl('https://rocketeers.app/api/v1');
+    Rocketeers::setBaseUrl('https://app.rocketeersapp.com/api/v1');
 
     $client = new TestableRocketeers('token');
     $client->report(['error' => 'test']);
 
-    expect($client->lastUrl)->toBe('https://rocketeers.app/api/v1/errors');
+    expect($client->lastUrl)->toBe('https://app.rocketeersapp.com/api/v1/errors');
 });
 
 it('uses the static base url override when set', function () {
@@ -125,7 +125,7 @@ it('uses the static base url override when set', function () {
     expect($client->lastUrl)->toBe('https://custom.example.com/api/v1/errors');
 
     // Reset for other tests
-    Rocketeers::setBaseUrl('https://rocketeers.app/api/v1');
+    Rocketeers::setBaseUrl('https://app.rocketeersapp.com/api/v1');
 });
 
 it('redacts the payload before it goes over the wire', function () {
