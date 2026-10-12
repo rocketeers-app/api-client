@@ -48,7 +48,7 @@ class Rocketeers
         }
 
         try {
-            $json = json_encode($this->redactor()->redactPayload($data));
+            $json = json_encode($this->redactor()->redactPayload($data), JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
 
             $ch = curl_init($this->baseUrl . '/errors');
             curl_setopt_array($ch, [

@@ -118,3 +118,78 @@ it('scrubs a credential out of the reported url', function () {
 
     expect($payload['url'])->toBe('https://app.test/auth/github/callback?code='.Redactor::REDACTED.'&team=3');
 });
+
+it('keeps the indentation and brackets of a line of code', function () {
+    $redactor = new Redactor;
+
+    expect($redactor->redactCode('        $items = [];'))->toBe('        $items = [];')
+        ->and($redactor->redactCode('    []'))->toBe('    []')
+        ->and($redactor->redactCode('    {'))->toBe('    {')
+        ->and($redactor->redactCode('    public function send(&$apiKey = null, $url = "?token=1")'))
+        ->toBe('    public function send(&$apiKey = null, $url = "?token=1")');
+});
+
+it('scrubs a bearer token and a private key out of a line of code', function () {
+    $redactor = new Redactor;
+
+    expect($redactor->redactCode("        ->withHeaders(['Authorization: Bearer 12|aBcDeFgHiJkLmNoP'])"))
+        ->toBe("        ->withHeaders(['Authorization: Bearer ".Redactor::REDACTED."'])")
+        ->and($redactor->redactCode('    $key = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n-----END RSA PRIVATE KEY-----";'))
+        ->toBe('    $key = "'.Redactor::REDACTED.'";');
+});
+
+it('scrubs a private key spread over the lines of a snippet', function () {
+    $snippet = (new Redactor)->redactCodeSnippet([
+        10 => '    $key = <<<KEY',
+        11 => '    -----BEGIN OPENSSH PRIVATE KEY-----',
+        12 => '    b3BlbnNzaC1rZXktdjEAAAAA',
+        13 => '    -----END OPENSSH PRIVATE KEY-----',
+        14 => '    KEY;',
+    ]);
+
+    expect($snippet)->toBe([
+        10 => '    $key = <<<KEY',
+        11 => '    '.Redactor::REDACTED,
+        12 => '    '.Redactor::REDACTED,
+        13 => '    '.Redactor::REDACTED,
+        14 => '    KEY;',
+    ]);
+});
+
+it('scrubs a private key the snippet starts or ends inside of', function () {
+    $redactor = new Redactor;
+
+    expect($redactor->redactCodeSnippet([
+        1 => 'b3BlbnNzaC1rZXktdjEAAAAA',
+        2 => '-----END OPENSSH PRIVATE KEY-----";',
+        3 => 'return $key;',
+    ]))->toBe([1 => Redactor::REDACTED, 2 => Redactor::REDACTED.'";', 3 => 'return $key;'])
+        ->and($redactor->redactCodeSnippet([
+            7 => '$key = "-----BEGIN OPENSSH PRIVATE KEY-----',
+            8 => 'b3BlbnNzaC1rZXktdjEAAAAA',
+        ]))->toBe([7 => '$key = "'.Redactor::REDACTED, 8 => Redactor::REDACTED]);
+});
+
+it('redacts the code of a reported frame as code and the rest of it as data', function () {
+    $payload = (new Redactor)->redactPayload([
+        'trace' => [
+            [
+                'file' => 'app/Services/Genesys.php',
+                'line' => 31,
+                'function' => 'send',
+                'code_snippet' => [
+                    30 => '        $headers = [];',
+                    31 => "        \$this->post('https://genesys.test?token=abc', ['Authorization: Bearer 12|aBcDeFgHiJkLmNoP']);",
+                ],
+            ],
+            ['file' => 'https://app.test/callback?code=4ab19c', 'line' => 3],
+        ],
+    ]);
+
+    expect($payload['trace'][0]['code_snippet'])->toBe([
+        30 => '        $headers = [];',
+        31 => "        \$this->post('https://genesys.test?token=abc', ['Authorization: Bearer ".Redactor::REDACTED."']);",
+    ])
+        ->and($payload['trace'][0]['function'])->toBe('send')
+        ->and($payload['trace'][1]['file'])->toBe('https://app.test/callback?code='.Redactor::REDACTED);
+});

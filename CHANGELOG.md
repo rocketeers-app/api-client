@@ -2,6 +2,11 @@
 
 All notable changes to `rocketeers-api-client` will be documented in this file
 
+## 2.21.0 - 2026-10-12
+
+- Redact the code snippets of a trace with `Redactor::redactCode()`, which only matches credential shapes, so indentation and lines such as `[]` survive; a private key spread over the lines of a snippet is redacted too
+- Encode a report with `JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR`, so a source file with invalid UTF-8 no longer loses the whole report
+
 ## 2.20.1 - 2026-10-12
 
 - Report to `https://api.rocketeersapp.com/v1` by default, since `app.rocketeersapp.com/api/v1` no longer serves the API

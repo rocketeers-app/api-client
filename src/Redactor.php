@@ -66,6 +66,10 @@ class Redactor
         '/(?<=IDENTIFIED BY )(\'(?:[^\']|\'\')*\')/i',
     ];
 
+    const PRIVATE_KEY_BEGIN = '/-----BEGIN [A-Z ]*PRIVATE KEY-----/';
+
+    const PRIVATE_KEY_END = '/-----END [A-Z ]*PRIVATE KEY-----/';
+
     /** A credential named in a URL query string, wherever that URL turns up. */
     const QUERY_PATTERN = '/([?&][^=&\s#]*(?:password|passwd|secret|token|signature|api[_-]?key|credential|code|key)[^=&\s#]*=)[^&\s#]*/i';
 
@@ -99,12 +103,72 @@ class Redactor
         $redacted = [];
 
         foreach ($payload as $field => $value) {
-            $redacted[$field] = is_array($value) && in_array($field, self::REQUEST_FIELDS, true)
-                ? $this->redactRequestData($value)
-                : $this->redact($value);
+            if (is_array($value) && in_array($field, self::REQUEST_FIELDS, true)) {
+                $redacted[$field] = $this->redactRequestData($value);
+            } elseif (is_array($value) && $field === 'trace') {
+                $redacted[$field] = $this->redactTrace($value);
+            } else {
+                $redacted[$field] = $this->redact($value);
+            }
         }
 
         return $redacted;
+    }
+
+    public function redactTrace(array $trace): array
+    {
+        $redacted = [];
+
+        foreach ($trace as $index => $frame) {
+            if (! is_array($frame) || ! isset($frame['code_snippet']) || ! is_array($frame['code_snippet'])) {
+                $redacted[$index] = $this->redact($frame);
+
+                continue;
+            }
+
+            $redacted[$index] = $this->redactArray(array_diff_key($frame, ['code_snippet' => true]));
+            $redacted[$index]['code_snippet'] = $this->redactCodeSnippet($frame['code_snippet']);
+        }
+
+        return $redacted;
+    }
+
+    public function redactCodeSnippet(array $snippet): array
+    {
+        $lines = array_map(function ($line) {
+            return is_string($line) ? $this->redactCode($line) : $line;
+        }, $snippet);
+
+        $insideKey = $this->startsInsidePrivateKey($lines);
+
+        foreach ($lines as $number => $line) {
+            if (! is_string($line)) {
+                continue;
+            }
+
+            preg_match('/^\s*/', $line, $indentation);
+
+            if ($insideKey && preg_match(self::PRIVATE_KEY_END, $line, $end, PREG_OFFSET_CAPTURE)) {
+                $lines[$number] = $indentation[0].self::REDACTED.substr($line, $end[0][1] + strlen($end[0][0]));
+                $insideKey = false;
+            } elseif ($insideKey) {
+                $lines[$number] = $indentation[0].self::REDACTED;
+            } elseif (preg_match(self::PRIVATE_KEY_BEGIN, $line, $begin, PREG_OFFSET_CAPTURE)) {
+                $lines[$number] = substr($line, 0, $begin[0][1]).self::REDACTED;
+                $insideKey = true;
+            }
+        }
+
+        return $lines;
+    }
+
+    public function redactCode(string $line): string
+    {
+        foreach (self::SECRET_PATTERNS as $pattern) {
+            $line = preg_replace($pattern, self::REDACTED, $line);
+        }
+
+        return $line;
     }
 
     /**
@@ -159,6 +223,25 @@ class Redactor
         }
 
         return preg_replace(self::QUERY_PATTERN, '$1'.self::REDACTED, $value);
+    }
+
+    private function startsInsidePrivateKey(array $lines): bool
+    {
+        foreach ($lines as $line) {
+            if (! is_string($line)) {
+                continue;
+            }
+
+            if (preg_match(self::PRIVATE_KEY_BEGIN, $line)) {
+                return false;
+            }
+
+            if (preg_match(self::PRIVATE_KEY_END, $line)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
