@@ -2,6 +2,10 @@
 
 All notable changes to `rocketeers-api-client` will be documented in this file
 
+## 2.20.1 - 2026-10-12
+
+- Report to `https://api.rocketeersapp.com/v1` by default, since `app.rocketeersapp.com/api/v1` no longer serves the API
+
 ## 1.3.0 - 2026-09-08
 
 - Redact credentials from every report before it is sent, via the new `Rocketeers\Redactor`
