@@ -2,6 +2,12 @@
 
 All notable changes to `rocketeers-api-client` will be documented in this file
 
+## 2.24.0 - 2026-11-17
+
+- Add `Rocketeers::baseUrl()`, returning the base URL reports are sent to
+- Split `report()` into `encodeReport()`, which redacts and encodes the payload, and `postReport()`, which posts an encoded report to `/errors`; `report()` sends exactly the same request as before
+- Stop calling `curl_close()` on PHP 8, where it has no effect and is deprecated since PHP 8.5
+
 ## 2.21.0 - 2026-10-12
 
 - Redact the code snippets of a trace with `Redactor::redactCode()`, which only matches credential shapes, so indentation and lines such as `[]` survive; a private key spread over the lines of a snippet is redacted too
