@@ -14,6 +14,12 @@ class Rocketeers
     /** @var Redactor|null */
     protected $redactor;
 
+    /** @var int|null */
+    protected $lastStatus;
+
+    /** @var string|null */
+    protected $lastError;
+
     public static function setBaseUrl($url)
     {
         static::$baseUrlOverride = $url;
@@ -77,6 +83,9 @@ class Rocketeers
      */
     public function postReport($json)
     {
+        $this->lastStatus = null;
+        $this->lastError = null;
+
         if (isset($_SERVER['HTTP_HOST'])) {
             $referrer = 'http'.(isset($_SERVER['HTTPS']) ? 's' : '').'://'."{$_SERVER['HTTP_HOST']}/{$_SERVER['REQUEST_URI']}";
         }
@@ -97,13 +106,41 @@ class Rocketeers
             ]);
             $response = curl_exec($ch);
 
+            $this->lastStatus = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE) ?: null;
+            $this->lastError = $response === false ? (curl_error($ch) ?: 'The request failed.') : null;
+
             if (PHP_VERSION_ID < 80000) {
                 curl_close($ch);
             }
 
             return $response;
         } catch (Exception $e) {
+            $this->lastStatus = null;
+            $this->lastError = $e->getMessage();
+
             return false;
         }
+    }
+
+    /**
+     * The HTTP status of the last report posted to /errors, or null when none was posted or no
+     * response came back.
+     *
+     * @return int|null
+     */
+    public function lastStatus()
+    {
+        return $this->lastStatus;
+    }
+
+    /**
+     * Why the last post got no response at all, such as a DNS, TLS or timeout error; null when a
+     * response came back, whatever its status.
+     *
+     * @return string|null
+     */
+    public function lastError()
+    {
+        return $this->lastError;
     }
 }
