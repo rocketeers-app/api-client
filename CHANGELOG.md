@@ -2,7 +2,7 @@
 
 All notable changes to `rocketeers-api-client` will be documented in this file
 
-## Unreleased
+## 2.26.0 - 2026-11-24
 
 - Add `Rocketeers::lastStatus()`, the HTTP status of the last report posted to `/errors`, and `Rocketeers::lastError()`, why that post got no response at all
 
